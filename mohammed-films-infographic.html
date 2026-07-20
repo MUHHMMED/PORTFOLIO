@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mohammed Films — Reel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0A0A0C;
+    --surface:#15171C;
+    --surface-2:#1D2027;
+    --line:#2A2D33;
+    --red:#FF3B30;
+    --cyan:#35E7FF;
+    --gold:#C9A227;
+    --ink:#F3F2ED;
+    --muted:#8A8D93;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:100%;height:100%;background:var(--void);overflow:hidden;
+    font-family:'Manrope',sans-serif;
+  }
+  .stage{
+    position:relative;width:100vw;height:100vh;
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(53,231,255,0.05), transparent 45%),
+      radial-gradient(ellipse at 85% 85%, rgba(255,59,48,0.06), transparent 50%),
+      var(--void);
+  }
+  /* HUD grid */
+  .grid-bg{
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:0.18;
+    mask-image:radial-gradient(ellipse at center, black 40%, transparent 85%);
+  }
+  /* corner reticle frame */
+  .reticle{position:absolute;inset:28px;pointer-events:none;z-index:20;}
+  .reticle span{position:absolute;width:26px;height:26px;border-color:var(--cyan);opacity:0.55;}
+  .reticle .tl{top:0;left:0;border-top:2px solid;border-left:2px solid;}
+  .reticle .tr{top:0;right:0;border-top:2px solid;border-right:2px solid;}
+  .reticle .bl{bottom:0;left:0;border-bottom:2px solid;border-left:2px solid;}
+  .reticle .br{bottom:0;right:0;border-bottom:2px solid;border-right:2px solid;}
+
+  .hud-label{
+    position:absolute;top:38px;left:44px;z-index:20;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;
+    color:var(--cyan);text-transform:uppercase;opacity:0.75;
+  }
+  .hud-index{
+    position:absolute;top:38px;right:44px;z-index:20;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;
+    color:var(--muted);text-transform:uppercase;
+  }
+  .hud-index b{color:var(--ink);}
+
+  /* scanline sweep */
+  .scanline{
+    position:absolute;top:0;bottom:0;width:2px;z-index:30;
+    background:linear-gradient(180deg, transparent, var(--cyan) 20%, var(--ink) 50%, var(--cyan) 80%, transparent);
+    box-shadow:0 0 24px 4px rgba(53,231,255,0.65);
+    left:-2px;opacity:0;
+  }
+  .scanline.active{animation:sweep 0.9s cubic-bezier(.4,0,.2,1) forwards;}
+  @keyframes sweep{
+    0%{left:-2px;opacity:1;}
+    92%{opacity:1;}
+    100%{left:100%;opacity:0;}
+  }
+
+  /* scenes */
+  .scene{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:flex-start;justify-content:center;
+    padding:0 12%;
+    opacity:0;visibility:hidden;
+    transform:translateY(14px);
+    transition:opacity .5s ease, transform .6s ease;
+    z-index:10;
+  }
+  .scene.show{opacity:1;visibility:visible;transform:translateY(0);}
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:4px;
+    color:var(--gold);text-transform:uppercase;margin-bottom:22px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--gold);}
+
+  h1.display{
+    font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;
+    color:var(--ink);letter-spacing:1px;line-height:0.98;
+    font-size:clamp(40px,7vw,92px);
+  }
+  h1.display .accent{color:var(--red);}
+  h1.display .accent-cyan{color:var(--cyan);}
+
+  p.sub{
+    font-family:'Manrope',sans-serif;font-weight:500;color:var(--muted);
+    font-size:clamp(15px,1.6vw,20px);max-width:620px;margin-top:22px;line-height:1.55;
+  }
+  p.sub b{color:var(--ink);font-weight:600;}
+
+  /* scene 1 */
+  #s1 h1.display{font-size:clamp(56px,9vw,128px);}
+  .tagline-strip{
+    margin-top:26px;display:flex;align-items:center;gap:14px;
+    font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:3px;
+    color:var(--cyan);text-transform:uppercase;
+  }
+  .tagline-strip .dot{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);}
+
+  /* scene 3 toolkit grid */
+  .tool-grid{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px;max-width:760px;}
+  .tool-chip{
+    border:1px solid var(--line);background:var(--surface);
+    padding:14px 20px;border-radius:6px;
+    font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:1px;color:var(--ink);
+    display:flex;align-items:center;gap:10px;
+  }
+  .tool-chip .tag{font-size:10px;color:var(--muted);letter-spacing:2px;}
+  .tool-chip.ai{border-color:rgba(53,231,255,0.4);}
+  .tool-chip.ai .tag{color:var(--cyan);}
+  .tool-chip.craft{border-color:rgba(201,162,39,0.4);}
+  .tool-chip.craft .tag{color:var(--gold);}
+
+  /* scene 4 process */
+  .process-track{
+    display:flex;align-items:center;margin-top:36px;width:100%;max-width:900px;
+  }
+  .proc-step{display:flex;flex-direction:column;align-items:flex-start;min-width:150px;position:relative;}
+  .proc-num{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red);letter-spacing:2px;margin-bottom:8px;
+  }
+  .proc-name{
+    font-family:'Oswald',sans-serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--ink);
+  }
+  .proc-line{flex:1;height:1px;background:linear-gradient(90deg, var(--line), var(--cyan), var(--line));position:relative;top:-14px;opacity:0.6;}
+
+  /* scene 5 featured work */
+  .work-card{
+    margin-top:28px;border:1px solid var(--line);background:var(--surface);
+    border-radius:8px;padding:26px 30px;max-width:640px;
+  }
+  .work-card .client{
+    font-family:'Oswald',sans-serif;font-size:22px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;
+  }
+  .work-tags{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .work-tags span{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    border:1px solid var(--line);padding:6px 12px;border-radius:20px;letter-spacing:1px;
+  }
+
+  /* scene 6 contact */
+  .platform-list{margin-top:28px;display:flex;flex-direction:column;gap:14px;}
+  .platform-row{
+    display:flex;align-items:center;gap:16px;
+    font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--ink);
+  }
+  .platform-row .k{color:var(--muted);width:110px;font-size:12px;letter-spacing:2px;text-transform:uppercase;}
+  .platform-row .v{color:var(--cyan);}
+
+  /* progress scrubber */
+  .scrubber{
+    position:absolute;left:44px;right:44px;bottom:36px;z-index:20;
+    height:2px;background:var(--line);border-radius:2px;overflow:hidden;
+  }
+  .scrubber .fill{
+    height:100%;width:0%;background:linear-gradient(90deg, var(--red), var(--gold), var(--cyan));
+  }
+  .scrubber-ticks{
+    position:absolute;left:44px;right:44px;bottom:46px;z-index:20;
+    display:flex;justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-bg"></div>
+  <div class="reticle"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
+  <div class="hud-label">Mohammed Films — Showreel</div>
+  <div class="hud-index"><b id="sceneNo">01</b> / 06</div>
+  <div class="scanline" id="scan"></div>
+
+  <!-- Scene 1: Logo / Identity -->
+  <section class="scene" id="s1">
+    <div class="eyebrow">Automotive · Cinematic · AI-Assisted</div>
+    <h1 class="display">MOHAMMED<br><span class="accent">FILMS</span></h1>
+    <div class="tagline-strip"><span class="dot"></span>Cinematic automotive content, engineered with AI</div>
+  </section>
+
+  <!-- Scene 2: Role -->
+  <section class="scene" id="s2">
+    <div class="eyebrow">Who's behind the lens</div>
+    <h1 class="display">VIDEO EDITOR<br><span class="accent-cyan">&amp; CONTENT CREATOR</span></h1>
+    <p class="sub">Based in the <b>UAE</b>, rooted in <b>Egypt</b>. Builds promotional content and motion graphics for automotive brands — blending <b>AI-generated footage</b> with traditional editing craft.</p>
+  </section>
+
+  <!-- Scene 3: Toolkit -->
+  <section class="scene" id="s3">
+    <div class="eyebrow">The Stack</div>
+    <h1 class="display">TOOLKIT</h1>
+    <div class="tool-grid">
+      <div class="tool-chip ai"><span class="tag">AI GEN</span>Runway</div>
+      <div class="tool-chip ai"><span class="tag">AI GEN</span>Kling</div>
+      <div class="tool-chip ai"><span class="tag">AI GEN</span>Qwen</div>
+      <div class="tool-chip craft"><span class="tag">CRAFT</span>Cinematic Edit</div>
+      <div class="tool-chip craft"><span class="tag">CRAFT</span>Motion Graphics</div>
+      <div class="tool-chip craft"><span class="tag">CRAFT</span>Color Grade</div>
+    </div>
+  </section>
+
+  <!-- Scene 4: Process -->
+  <section class="scene" id="s4">
+    <div class="eyebrow">Workflow</div>
+    <h1 class="display">FROM CONCEPT<br>TO DELIVERY</h1>
+    <div class="process-track">
+      <div class="proc-step"><div class="proc-num">01</div><div class="proc-name">Concept</div></div>
+      <div class="proc-line"></div>
+      <div class="proc-step"><div class="proc-num">02</div><div class="proc-name">AI Plates</div></div>
+      <div class="proc-line"></div>
+      <div class="proc-step"><div class="proc-num">03</div><div class="proc-name">Edit</div></div>
+      <div class="proc-line"></div>
+      <div class="proc-step"><div class="proc-num">04</div><div class="proc-name">Color Grade</div></div>
+      <div class="proc-line"></div>
+      <div class="proc-step"><div class="proc-num">05</div><div class="proc-name">Deliver</div></div>
+    </div>
+  </section>
+
+  <!-- Scene 5: Featured Work -->
+  <section class="scene" id="s5">
+    <div class="eyebrow">Featured Client Work</div>
+    <h1 class="display">ON THE ROAD<br>WITH BRANDS</h1>
+    <div class="work-card">
+      <div class="client">Car Clinic Garage</div>
+      <p class="sub" style="margin-top:10px;">PPF, ceramic coating &amp; vehicle wrapping — promotional content, motion graphics and AI-generated video for the full brand.</p>
+      <div class="work-tags">
+        <span>PPF Campaigns</span><span>Warranty Graphics</span><span>Logo Reveal</span><span>AI B-Roll</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scene 6: Contact -->
+  <section class="scene" id="s6">
+    <div class="eyebrow">Let's Work Together</div>
+    <h1 class="display">FIND THE<br><span class="accent">REEL</span></h1>
+    <div class="platform-list">
+      <div class="platform-row"><span class="k">Portfolio</span><span class="v">muhh007.framer.website</span></div>
+      <div class="platform-row"><span class="k">Behance</span><span class="v">behance.net/kero15</span></div>
+      <div class="platform-row"><span class="k">LinkedIn</span><span class="v">/in/mohammed-films</span></div>
+      <div class="platform-row"><span class="k">Upwork</span><span class="v">Available for freelance</span></div>
+    </div>
+  </section>
+
+  <div class="scrubber-ticks">
+    <span>IDENTITY</span><span>ROLE</span><span>TOOLKIT</span><span>PROCESS</span><span>WORK</span><span>CONTACT</span>
+  </div>
+  <div class="scrubber"><div class="fill" id="fill"></div></div>
+</div>
+
+<script>
+  const scenes = ['s1','s2','s3','s4','s5','s6'];
+  const DURATION = 4200; // ms per scene
+  let idx = 0;
+  const scan = document.getElementById('scan');
+  const fill = document.getElementById('fill');
+  const sceneNo = document.getElementById('sceneNo');
+  let elapsed = 0;
+  const total = DURATION * scenes.length;
+
+  function showScene(i){
+    scenes.forEach((id, n) => {
+      document.getElementById(id).classList.toggle('show', n === i);
+    });
+    sceneNo.textContent = String(i+1).padStart(2,'0');
+    scan.classList.remove('active');
+    void scan.offsetWidth; // restart animation
+    scan.classList.add('active');
+  }
+
+  showScene(0);
+
+  setInterval(() => {
+    idx = (idx + 1) % scenes.length;
+    showScene(idx);
+  }, DURATION);
+
+  // smooth progress bar independent tick
+  const tickMs = 40;
+  setInterval(() => {
+    elapsed = (elapsed + tickMs) % total;
+    fill.style.width = ((elapsed / total) * 100) + '%';
+  }, tickMs);
+</script>
+</body>
+</html>
